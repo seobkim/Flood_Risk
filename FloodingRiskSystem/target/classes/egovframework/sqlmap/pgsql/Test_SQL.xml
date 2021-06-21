@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="kr.go.flood.common.service.impl.TestMapper">
+
+	<!--자연녹지지역 조회 -->
+	<select id="selectNatureAreaRes" resultType="FloodVO">
+		SELECT
+			sum(ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM))) as natureArea, remark as natureAreaName, ta.gid,st_astext(ta.geom) as wkt
+		FROM
+			population ta, landUse tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) AND remark= '자연녹지지역'
+		GROUP BY tc.remark, ta.gid
+		ORDER BY natureArea
+	</select>
+	
+	<!--(종합)자연녹지지역 조회 -->
+	<select id="selectNatureAreaResTotal" resultType="FloodVO">
+		SELECT
+			sum(ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM))) as natureArea, remark as natureAreaName, ta.gid,st_astext(ta.geom) as wkt
+		FROM
+			totalraster ta, landUse tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) AND remark= '자연녹지지역'
+		GROUP BY tc.remark, ta.gid
+		ORDER BY gid
+	</select>
+
+	<!--공업지역 조회 -->
+	<select id="selectIndusAreaRes"	resultType="FloodVO">
+		SELECT
+			sum(ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM))) as indusArea, remark as natureAreaName, ta.gid, st_astext(ta.geom) as wkt
+		FROM
+			population ta, landUse tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) AND remark= '공업지역'
+		GROUP BY tc.remark, ta.gid
+		ORDER BY indusArea
+	</select>
+	
+	<!--(종합)공업지역 조회 -->
+	<select id="selectIndusAreaResTotal" resultType="FloodVO">
+		SELECT
+			sum(ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM))) as indusArea, remark as natureAreaName, ta.gid, st_astext(ta.geom) as wkt
+		FROM
+			totalraster ta, landUse tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) AND remark= '공업지역'
+		GROUP BY tc.remark, ta.gid
+		ORDER BY indusArea
+	</select>
+
+	<!--상업지역 조회 -->
+	<select id="selectCommerAreaRes" resultType="FloodVO">
+		SELECT
+			sum(ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM))) as commerArea, remark as natureAreaName, ta.gid,st_astext(ta.geom) as wkt
+		FROM
+			population ta, landUse tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) AND remark= '상업지역'
+		GROUP BY tc.remark, ta.gid
+		ORDER BY commerArea
+	</select>
+	
+	<!--(종합)상업지역 조회 -->
+	<select id="selectCommerAreaResTotal" resultType="FloodVO">
+		SELECT
+			sum(ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM))) as commerArea, remark as natureAreaName, ta.gid,st_astext(ta.geom) as wkt
+		FROM
+			totalraster ta, landUse tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) AND remark= '상업지역'
+		GROUP BY tc.remark, ta.gid
+		ORDER BY commerArea
+	</select>
+
+	<!--주거지역 조회 -->
+	<select id="selectLiveAreaRes" resultType="FloodVO">
+		SELECT
+			sum(ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM))) as liveArea, remark as natureAreaName, ta.gid,st_astext(ta.geom) as wkt
+		FROM
+			population ta, landUse tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) AND remark= '주거지역'
+		GROUP BY tc.remark, ta.gid
+		ORDER BY liveArea
+	</select>
+	
+	<!--(종합)주거지역 조회 -->
+	<select id="selectLiveAreaResTotal" resultType="FloodVO">
+		SELECT
+			sum(ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM))) as liveArea, remark as natureAreaName, ta.gid,st_astext(ta.geom) as wkt
+		FROM
+			totalraster ta, landUse tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) AND remark= '주거지역'
+		GROUP BY tc.remark, ta.gid
+		ORDER BY liveArea
+	</select>
+
+	<!-- 인구수 조회 -->
+	<select id="selectPopCntRes" resultType="FloodVO">
+		SELECT 
+			trunc(popval,2) as popCnt,st_astext(geom) as wkt, gid
+		FROM 
+			population
+		WHERE
+			popval != 0
+		GROUP BY gid
+		ORDER BY popCnt
+	</select>
+
+	<!-- (종합)인구수 조회 -->
+	<select id="selectPopCntResTotal" resultType="FloodVO">
+		SELECT 
+			trunc(popval,2) as popCnt, gid, st_astext(geom) as wkt 
+		FROM 
+			totalraster 
+		WHERE popval != 0
+		ORDER BY popcnt
+	</select>
+
+	<!-- 10년 집중형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectTenHuffRes" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(tenhuffval)*100 as tenYrHuff, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, tenhuffval, ta.geom
+			FROM 
+				totalraster ta, tenyearhuff tb
+			WHERE 
+				st_intersects(ta.geom,tb.geom)
+				and
+				tb.tenhuffval > 0
+			) ta
+		GROUP BY gid, geom
+		ORDER BY tenYrHuff
+	</select>
+
+	<!-- 10년 분산형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectTenMonoRes" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(tenmonoval)*100 as tenYrMono, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, tenmonoval, ta.geom
+			FROM 
+				totalraster ta, tenyearmono tb
+			WHERE 
+				tb.tenmonoval > 0 AND st_intersects(ta.geom,tb.geom)
+			) ta 
+		GROUP BY gid, geom
+		ORDER BY tenYrMono
+	</select>
+
+	<!-- 30년 집중형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectThrHuffRes" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(thrhuffval)*100 as thrYrHuff, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, thrhuffval, ta.geom
+			FROM 
+				totalraster ta, thryearhuff tb
+			WHERE 
+				tb.thrhuffval > 0 AND st_intersects(ta.geom,tb.geom)  
+			) ta 
+		GROUP BY gid, geom
+		ORDER BY thrYrHuff
+	</select>
+
+	<!-- 30년 분산형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectThrMonoRes" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(thrmonoval)*100 as thrYrMono, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, thrmonoval, ta.geom
+			FROM 
+				totalraster ta, thryearmono tb
+			WHERE 
+				tb.thrmonoval > 0 AND st_intersects(ta.geom,tb.geom)  
+			)ta
+		 GROUP BY gid, geom
+		 ORDER BY thrYrMono
+	</select>
+
+	<!-- 50년 집중형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectFiftHuffRes" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(fifhuffval)*100 as fiftYrHuff, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, fifhuffval, ta.geom
+			FROM 
+				totalraster ta, fifyearhuff tb
+			WHERE
+				tb.fifthuffval > 0 AND st_intersects(ta.geom,tb.geom)  
+			) ta 
+		GROUP BY gid, geom
+		ORDER BY fiftYrHuff
+	</select>
+
+	<!-- 50년 분산형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectFiftMonoRes" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(fifmonoval)*100 as fiftYrMono, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, fifmonoval, ta.geom
+			FROM 
+				totalraster ta, fifyearmono tb
+			WHERE 
+				tb.fiftmonoval > 0 AND st_intersects(ta.geom,tb.geom)  
+			) ta 
+		GROUP BY gid, geom
+		ORDER BY fiftYrMono
+	</select>
+
+
+	<!-- 격자 내 취약 건축물 수 -->
+	<select id="selectBuildCntRes" resultType="FloodVO">
+		SELECT 
+			count(*) as buildCnt, wkt
+		FROM(
+			SELECT
+				tc.*, st_astext(ta.geom) as wkt
+			FROM 
+				totalraster ta, buildInfo tc
+			WHERE st_intersects(ta.geom,tc.geom)
+			) as mtb
+		WHERE 
+			basemcnt > 0 or buildage >= 30
+		GROUP BY wkt
+		ORDER BY buildCnt
+	</select>
+	
+	<!-- (종합)격자 내 취약 건축물 수 -->
+<!-- 	<select id="selectBuildCntResTotal" resultType="FloodVO"> -->
+<!-- 		SELECT  -->
+<!--           	count(*) as buildCnt,mtb.wkt, stb.gid -->
+<!--       	FROM( -->
+<!--         	SELECT -->
+<!--             	tc.*, st_astext(ta.geom) as wkt -->
+<!--          	FROM  -->
+<!--            	 	population ta, buildInfo tc -->
+<!--          	WHERE st_intersects(ta.geom,tc.geom) -->
+<!--          ) as mtb -->
+<!--          ,( -->
+<!--          	SELECT  -->
+<!--          		ta.gid,st_astext(ta.geom) as wkt  -->
+<!--       		FROM( -->
+<!--          		SELECT -->
+<!--             		ta.gid, ta.geom -->
+<!--          		FROM  -->
+<!--             		population ta, tenYrHuff tb -->
+<!--          		WHERE  -->
+<!--             		st_intersects(ta.geom,tb.geom) -->
+<!--             ) ta -->
+<!--       	GROUP BY gid, geom) as stb -->
+<!--       	WHERE  -->
+<!--       		(basemcnt > 0 or buildage >= 30) and stb.wkt = mtb.wkt -->
+<!--       	GROUP BY mtb.wkt, stb.gid -->
+<!--       	order by buildCnt -->
+<!-- 	</select> -->
+
+	<!-- (종합)격자 내 취약 건축물 수 -->
+	<select id="selectBuildCntResTotal" resultType="FloodVO">
+		SELECT 
+			count(*) as buildCnt, wkt
+		FROM(
+			SELECT
+				tc.*, st_astext(ta.geom) as wkt
+			FROM 
+				totalraster ta, buildInfo tc
+			WHERE st_intersects(ta.geom,tc.geom)
+		) as mtb
+		WHERE 
+			basemcnt > 0 or buildage >= 30
+		GROUP BY wkt
+		ORDER BY buildCnt
+	</select>
+
+	<!-- 격자 내 보호대상시설물 수 -->
+	<select id="selectProtectFacilCntRes" resultType="FloodVO">
+		SELECT 
+			count(*) as protectFacilityCnt, wkt
+		FROM(
+			SELECT 
+				tc.*, st_astext(ta.geom) as wkt
+			FROM 
+				population ta, protectfacilty tc
+			WHERE 
+				st_intersects(ta.geom,tc.geom)
+			) as mtb
+		GROUP BY wkt
+		ORDER BY protectFacilityCnt
+	</select>
+
+	<!-- (종합)격자 내 보호대상시설물 수 -->
+<!-- 	<select id="selectProtectFacilCntResTotal" resultType="FloodVO"> -->
+<!-- 		SELECT  -->
+<!-- 			count(*) as protectFacilityCnt, mtb.wkt, stb.gid -->
+<!-- 		FROM( -->
+<!-- 			SELECT  -->
+<!-- 				tc.*, st_astext(ta.geom) as wkt -->
+<!-- 			FROM  -->
+<!-- 				population ta, protectfacilty tc -->
+<!-- 			WHERE  -->
+<!-- 				st_intersects(ta.geom,tc.geom) -->
+<!-- 		) as mtb -->
+<!-- 		, (SELECT  -->
+<!-- 				ta.gid,st_astext(ta.geom) as wkt 		 -->
+<!-- 			FROM( -->
+<!-- 				SELECT -->
+<!--             		ta.gid, ta.geom -->
+<!--         		FROM  -->
+<!--            			population ta, tenYrHuff tb -->
+<!--         		WHERE  -->
+<!--         			st_intersects(ta.geom,tb.geom))ta -->
+<!-- 			GROUP BY gid, geom) as stb -->
+<!-- 		WHERE stb.wkt=mtb.wkt -->
+<!-- 		GROUP BY mtb.wkt, stb.gid -->
+<!-- 		ORDER BY protectFacilityCnt -->
+<!-- 	</select> -->
+	
+	<!-- (종합)격자 내 보호대상시설물 수 -->
+	<select id="selectProtectFacilCntResTotal" resultType="FloodVO">
+		SELECT 
+			count(*) as protectFacilityCnt, wkt
+		FROM(
+			SELECT 
+				tc.*, st_astext(ta.geom) as wkt
+			FROM 
+				totalraster ta, protectfacilty tc
+			WHERE 
+				st_intersects(ta.geom,tc.geom)
+			) as mtb
+		GROUP BY wkt
+		ORDER BY protectFacilityCnt
+	</select>
+
+	<!-- 도로 연장 조회 -->
+	<select id="selectRoadRes" resultType="FloodVO">
+		SELECT 
+			sum((ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM)) / St_area(tc.geom)) * dgm_lt) as roadLen, st_astext(ta.geom) as wkt
+		FROM 
+			population ta, road tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) 
+<!-- 		and  -->
+<!-- 		ST_Intersects(ta.geom,ST_GeomFromText(#{data},3857))  -->
+		GROUP BY ta.gid
+		ORDER BY roadLen
+	</select>
+	
+	<!-- (종합)도로 연장 조회 -->
+<!-- 	<select id="selectRoadResTotal" resultType="FloodVO"> -->
+<!-- 		SELECT -->
+<!-- 			roadLen, mtb.wkt, stb.gid -->
+<!-- 		FROM( -->
+<!-- 			SELECT  -->
+<!-- 	 			sum((ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM)) / St_area(tc.geom)) * dgm_lt) as roadLen, st_astext(ta.geom) as wkt -->
+<!-- 			FROM  -->
+<!-- 				population ta, road tc -->
+<!-- 			WHERE -->
+<!-- 				st_intersects(ta.geom,tc.geom)  -->
+<!-- 			GROUP BY ta.geom -->
+<!-- 		) as mtb,  -->
+<!-- 		(SELECT  -->
+<!-- 			ta.gid,st_astext(ta.geom) as wkt 		 -->
+<!-- 		FROM( -->
+<!-- 			SELECT -->
+<!--          		ta.gid, ta.geom -->
+<!--       		FROM  -->
+<!--          		population ta, tenYrHuff tb -->
+<!--       		WHERE  -->
+<!--       			st_intersects(ta.geom,tb.geom)  -->
+<!-- 		) as ta -->
+<!-- 		GROUP BY gid, ta.geom) as stb -->
+<!-- 		WHERE stb.wkt=mtb.wkt -->
+<!-- 		ORDER BY roadLen -->
+<!-- 	</select> -->
+	
+	<!-- (종합)도로 연장 조회 -->
+	<select id="selectRoadResTotal" resultType="FloodVO">
+		SELECT 
+			sum((ST_area(ST_INTERSECTION(ta.GEOM,tc.GEOM)) / St_area(tc.geom)) * dgm_lt) as roadLen, st_astext(ta.geom) as wkt
+		FROM 
+			totalraster ta, road tc
+		WHERE
+			st_intersects(ta.geom,tc.geom) 
+		GROUP BY ta.gid
+		ORDER BY roadLen
+	</select>
+	
+	<!-- 격자 폴리곤 형태 각 셀 위치 값 -->
+	<select id="selectLocationRes" resultType="FloodVO">
+		SELECT 
+			st_astext(geom) wkt, gid
+		FROM 
+			population
+		GROUP BY gid
+	</select>
+	
+	<!-- (종합)격자 폴리곤 형태 각 셀 위치 값 -->
+	<select id="selectLocationResTotal" resultType="FloodVO">
+		SELECT 
+			st_astext(geom) wkt, gid
+		FROM 
+			totalraster
+		GROUP BY gid
+	</select>
+	
+	
+	<!-- 0값 포함한 추출 쿼리  -->
+	
+	<!-- 10년 집중형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectTenHuffResZero" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(tenhuffval)*100 as tenYrHuff, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, tenhuffval, ta.geom
+			FROM 
+				totalraster ta, tenyearhuff tb
+			WHERE 
+				st_intersects(ta.geom,tb.geom)
+			) ta
+		GROUP BY gid, geom
+		ORDER BY tenYrHuff
+	</select>
+
+	<!-- 10년 분산형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectTenMonoResZero" resultType="FloodVO">
+		SELECT
+			ta.gid, max(tenmonoval)*100 as tenYrMono, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, tenmonoval, ta.geom
+			FROM 
+				totalraster ta, tenyearmono tb
+			WHERE 
+				st_intersects(ta.geom,tb.geom)
+			) ta 
+		GROUP BY gid, geom
+		ORDER BY tenYrMono
+	</select>
+
+	<!-- 30년 집중형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectThrHuffResZero" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(thrhuffval)*100 as thrYrHuff, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, thrhuffval, ta.geom
+			FROM 
+				totalraster ta, thryearhuff tb
+			WHERE 
+				st_intersects(ta.geom,tb.geom)  
+			) ta 
+		GROUP BY gid, geom
+		ORDER BY thrYrHuff
+	</select>
+
+	<!-- 30년 분산형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectThrMonoResZero" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(thrmonoval)*100 as thrYrMono, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, thrmonoval, ta.geom
+			FROM 
+				totalraster ta, thryearmono tb
+			WHERE 
+				st_intersects(ta.geom,tb.geom)  
+			)ta
+		 GROUP BY gid, geom
+		 ORDER BY thrYrMono
+	</select>
+
+	<!-- 50년 집중형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectFiftHuffResZero" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(fifhuffval)*100 as fiftYrHuff, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, fifhuffval, ta.geom
+			FROM 
+				totalraster ta, fifyearhuff tb
+			WHERE
+				st_intersects(ta.geom,tb.geom)  
+			) ta 
+		GROUP BY gid, geom
+		ORDER BY fiftYrHuff
+	</select>
+
+	<!-- 50년 분산형 침수 시뮬레이션 결과 격자 내 최대값 추출 쿼리 -->
+	<select id="selectFiftMonoResZero" resultType="FloodVO">
+		SELECT 
+			ta.gid, max(fifmonoval)*100 as fiftYrMono, st_astext(ta.geom) as wkt 
+		FROM(
+			SELECT
+				ta.gid, fifmonoval, ta.geom
+			FROM 
+				totalraster ta, fifyearmono tb
+			WHERE 
+				st_intersects(ta.geom,tb.geom)
+			) ta 
+		GROUP BY gid, geom
+		ORDER BY fiftYrMono
+	</select>
+	
+	<select id="selectPipeView" resultType="FloodVO">
+		SELECT
+			st_astext(geom) as wkt, ddr_nam
+		FROM
+			swl_dodr_as
+	</select>
+	
+	<select id="selectBorderView" resultType="FloodVO">
+		SELECT
+			st_astext(geom) as wkt
+		FROM
+			floodborder
+	</select>
+	
+</mapper>
